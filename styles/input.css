@@ -1,0 +1,278 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+    @apply
+        p-0 
+        m-0
+        font-main;
+}
+
+.link {
+    @apply
+        underline
+        text-main-500;
+}
+
+p {
+    @apply
+        mb-8;
+}
+
+.button {
+    @apply
+        flex flex-row justify-center items-center
+        relative
+        uppercase
+        text-sm
+        tracking-wider
+        font-bold
+        box-border
+        rounded
+        whitespace-nowrap
+        cursor-pointer;
+}
+
+.button img {
+    @apply
+        h-4 pr-2
+        mr-2;
+}
+
+.button i {
+    @apply
+        text-lg
+        leading-none
+        mr-4;
+}
+
+.button-sml {
+    @apply
+        button
+        px-4 py-2;
+}
+
+.button-med {
+    @apply
+        button
+        px-6 py-4;
+}
+
+.button-big {
+    @apply
+        button
+        px-6 py-5;
+}
+
+.button-pm {
+    @apply
+        button-big
+        text-back-100
+        bg-main-500
+        hover:bg-main-600;
+}
+
+.button-sc {
+    @apply
+        button-big
+        text-main-700
+        bg-main-100
+        hover:bg-main-200;
+}
+
+.button-tr {
+    @apply
+        button-big
+        text-main-500
+        bg-back-100
+        hover:text-main-700;
+}
+
+.toggle-button {
+    @apply
+        relative w-11 h-6 
+        bg-back-300
+        rounded-full
+        peer-checked:after:translate-x-full 
+        rtl:peer-checked:after:-translate-x-full 
+        after:absolute after:top-[2px] after:start-[2px] 
+        after:bg-back-100
+        peer-checked:after:bg-back-100
+        after:rounded-full 
+        after:h-5 after:w-5 
+        after:transition-all 
+        peer-checked:bg-main-400;
+}
+
+.gallery-tab-wrapper {
+    @apply
+        w-full 
+        flex flex-row items-center justify-between
+        sm:px-14 sm:py-24
+        px-6 py-8
+        rounded-md
+        border-2 border-back-200;
+}
+
+
+.gallery-tab {
+    @apply
+        z-50
+        w-full 
+        flex flex-col items-center justify-center sm:flex-row sm:justify-between gap-8
+        text-center sm:text-left
+}
+
+.painting-tab {
+    @apply
+        flex flex-col
+        px-6 pt-6
+        border-2
+        rounded-md
+        border-back-200;
+}
+
+.gallery-header-wrapper {
+    @apply
+        w-full 
+        flex flex-row items-center justify-between
+        sm:px-14 sm:py-24
+        px-6 py-8
+        shadow-xl shadow-back-200
+        rounded-md
+        border-back-200;
+        
+}
+
+.gallery-header {
+    @apply
+        z-50
+        w-full 
+        flex flex-col items-center justify-center sm:flex-row sm:justify-between
+        text-center sm:text-left
+}
+
+.table-col {
+    @apply 
+        text-left
+        p-4;
+}
+
+
+
+
+.header {
+    @apply 
+        w-full 
+        sm:px-16 sm:py-8
+        px-4 py-6 
+        sm:flex-row
+        flex flex-col justify-between items-center  gap-4
+        shadow-xl shadow-back-200;
+}
+
+.overlay {
+    @apply
+        fixed 
+        w-full h-full 
+        left-0 top-0 z-50
+        bg-front-400 bg-opacity-25;
+}
+
+
+.overlay-window-wrapper {
+    @apply
+        w-full h-full 
+        flex justify-center items-center
+}
+
+.overlay-window {
+    @apply
+        m-6
+        absolute
+        rounded-lg
+        bg-back-100;
+}
+
+
+.label {
+    @apply
+        relative
+        flex flex-col
+        w-full
+        sm:w-auto
+        text-sm
+        text-front-100
+        font-semibold;
+
+}
+
+.input {
+    @apply 
+        w-full p-2 
+        text-gray-900 
+        border-2 border-back-300 rounded-lg 
+        text-base 
+        outline-none
+        focus:ring-main-400 focus:border-main-400
+        file:mr-5 file:py-1 file:px-3 file:border-none
+        file:text-sm file:font-semibold
+        file:bg-stone-50 file:text-stone-700;
+}
+
+.form {
+    @apply 
+        w-full
+        relative
+        flex flex-col justify-center items-center  gap-12
+        sm:px-16 sm:py-16
+        px-4 py-6 
+        rounded-md;
+}
+
+
+.input-message {
+    @apply 
+        relative
+        mt-1
+        px-2 py-0.5
+        text-sm
+        w-fit
+        max-w-56
+        font-semibold
+        rounded-md
+        self-end;
+}
+
+.input-message:empty {
+    @apply
+        hidden;
+}
+
+.input-error {
+    @apply 
+        input-message
+        bg-red-200
+        text-red-800;
+}
+
+
+
+.tool-bar {
+    @apply 
+        flex flex-row justify-start items-center gap-8
+        py-12;
+}
+
+.view {
+    @apply 
+        m-auto
+        max-w-7xl
+        flex
+        relative
+        sm:px-8 py-8
+        px-4
+        mt-16
+        overflow-hidden;
+}

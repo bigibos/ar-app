@@ -1,0 +1,20 @@
+RewriteEngine On
+
+# Allow access to specific folders and files
+RewriteRule ^$ - [L]
+RewriteRule ^index\.php$ - [L]
+RewriteRule ^public/ - [L]
+RewriteRule ^styles/ - [L]
+RewriteRule ^pages/ - [L]
+RewriteRule ^account/ - [L]
+RewriteRule ^tmp/ - [L]
+
+# Deny access to all other files and directories
+RewriteCond %{REQUEST_URI} !^/$
+RewriteCond %{REQUEST_URI} !^/index\.php$
+RewriteCond %{REQUEST_URI} !^/public/
+RewriteCond %{REQUEST_URI} !^/styles/
+RewriteCond %{REQUEST_URI} !^/pages/
+RewriteCond %{REQUEST_URI} !^/account/
+RewriteCond %{REQUEST_URI} !^/tmp/
+RewriteRule ^ - [F] 
