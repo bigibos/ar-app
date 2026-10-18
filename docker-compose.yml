@@ -4,8 +4,16 @@ services:
     restart: unless-stopped
     container_name: ar-app
     ports:
-      - "127.0.0.1:8080:80"
+      - "80:80"
       - "443:443"
+    environment:
+      SERVER_NAME: ${SERVER_NAME:-localhost}
+      SERVER_ALIAS: ${SERVER_ALIAS:-localhost}
+      ENVIRONMENT: ${ENVIRONMENT:-production}
+      BASE_URL: ${BASE_URL}
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
     volumes:
       - ./:/var/www/html
       - ./docker/certs:/etc/apache2/ssl:ro
@@ -21,7 +29,7 @@ services:
       MYSQL_USER: ${DB_USER}
       MYSQL_PASSWORD: ${DB_PASSWORD}
     ports:
-      - "127.0.0.1:3306:3306"
+      - "3306:3306"
     volumes:
       - db_data:/var/lib/mysql
       - ./database/init:/docker-entrypoint-initdb.d:ro
@@ -33,7 +41,7 @@ services:
       PMA_HOST: mysql
       PMA_PORT: 3306
     ports:
-      - "127.0.0.1:8081:80"
+      - "8081:80"
     depends_on:
       - mysql
 volumes:

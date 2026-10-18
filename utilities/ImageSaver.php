@@ -21,8 +21,6 @@ class ImageSaver {
             return null;
         }
 
-        var_dump($source);
-
         $info = getimagesize($source['tmp_name']);
 
         if (!$info) {

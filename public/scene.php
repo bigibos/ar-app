@@ -152,6 +152,8 @@ function loadObjects($paintings) {
     <script src="https://jeromeetienne.github.io/AR.js/aframe/build/aframe-ar.js"></script>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 </head>
+
+
 <body id="scene" style='margin : 0px; overflow: hidden;'>
 
   <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;" vr-mode-ui='enabled: false' >

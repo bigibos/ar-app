@@ -31,6 +31,13 @@ class DB {
     public static function initializeMarkers(?mysqli $conn = null): void
     {
         $conn = $conn ?? DB::connect();
+
+        $result = $conn->query("SELECT * FROM ar_markers");
+
+        if ($result && $result->num_rows > 0) {
+            return;
+        }
+
         $baseUrl = rtrim($_ENV['BASE_URL'], '/');
 
         $sql = "

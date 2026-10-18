@@ -5,8 +5,6 @@ use Database\DB;
 
 session_start();
 
-define("BASE_URL", "https://192.168.0.23/ar-app/");
-
 ?>
 
 
@@ -28,7 +26,7 @@ define("BASE_URL", "https://192.168.0.23/ar-app/");
 
 <body>
 
-  <?php
+<?php
 
   // Composer and custom autoloading
   require_once __DIR__ . '/autoloader.php';
@@ -73,5 +71,7 @@ define("BASE_URL", "https://192.168.0.23/ar-app/");
 
   
   ?>
+
+  
 </body>
 </html>
