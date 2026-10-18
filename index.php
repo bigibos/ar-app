@@ -30,13 +30,22 @@ define("BASE_URL", "https://192.168.0.23/ar-app/");
 
   <?php
 
-  require('autoloader.php');
+  // Composer and custom autoloading
+  require_once __DIR__ . '/autoloader.php';
+  require_once __DIR__ . '/vendor/autoload.php';
+
+  // Environmental variabless
+  $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
+  $dotenv->load();
 
   try {
     DB::connect();
+    DB::initializeMarkers();
   }
   catch (Exception $e) {
     echo "Nelze navázat spojení s databází";
+    echo "<hr>";
+    echo "Error: " . $e->getMessage();
     die();
   }
 

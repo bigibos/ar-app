@@ -7,7 +7,7 @@ use Models\UserModel;
 
 class Auth {
     public static function auth(): ?UserModel {
-        $user = null;;
+        $user = null;
         if (isset($_SESSION['rembrandt'])) {
             $user = UserController::auth($_SESSION['rembrandt']);
                 if ($user === null) {

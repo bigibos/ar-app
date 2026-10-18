@@ -4,7 +4,7 @@ namespace Utilities;
 
 class ImageSaver {
 
-    public static $base_url = "https://localhost/ar-app";
+   
 
     public static function makeFileName($source, $new_filename) {
         $filename = $source['name'];
@@ -21,6 +21,8 @@ class ImageSaver {
             return null;
         }
 
+        var_dump($source);
+
         $info = getimagesize($source['tmp_name']);
 
         if (!$info) {
@@ -36,7 +38,7 @@ class ImageSaver {
             return null;
         }
 
-        return self::$base_url . "/public/images/" . self::makeFileName($source, $new_filename);
+        return $_ENV['BASE_URL'] . "/public/images/" . self::makeFileName($source, $new_filename);
     }
 
     public static function compressAndSave($source, $new_filename, $max_size_in_kB): ?string {
