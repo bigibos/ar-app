@@ -1,36 +1,29 @@
-```php
 <?php
 
 spl_autoload_register(function ($class) {
-    $parts = explode('\\', $class);
-    $path = __DIR__;
+    $prefixes = [
+        'Database\\' => 'databae/',
+    ];
 
-    foreach ($parts as $part) {
-        if (!is_dir($path)) {
-            $entries = scandir($path);
-            $match = null;
-
-            foreach ($entries as $entry) {
-                if (strcasecmp($entry, $part) === 0) {
-                    $match = $entry;
-                    break;
-                }
-            }
-
-            if ($match === null) {
-                return;
-            }
-
-            $path .= '/' . $match;
-        } else {
-            $path .= '/' . $part;
+    foreach ($prefixes as $prefix => $directory) {
+        if (strncmp($class, $prefix, strlen($prefix)) !== 0) {
+            continue;
         }
+
+        $relativeClass = substr($class, strlen($prefix));
+        $file = __DIR__ . '/' . $directory
+            . str_replace('\\', '/', $relativeClass) . '.php';
+
+        if (file_exists($file)) {
+            require_once $file;
+        }
+
+        return;
     }
 
-    $file = $path . '.php';
+    $file = __DIR__ . '/' . str_replace('\\', '/', $class) . '.php';
 
-    if (is_file($file)) {
+    if (file_exists($file)) {
         require_once $file;
     }
 });
-```
