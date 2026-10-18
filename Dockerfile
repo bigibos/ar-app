@@ -15,6 +15,5 @@ RUN apt-get update && apt-get install -y \
 
 # RUN a2ensite 000-default-ssl.conf
 
-RUN a2ensite
 
 WORKDIR /var/www/html
