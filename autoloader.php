@@ -1,27 +1,19 @@
 <?php
 
 spl_autoload_register(function ($class) {
-    $prefixes = [
-        'Database\\' => 'databae/',
-    ];
+    // Rozdělíme třídu podle namespace (např. "Database\DB" -> ["Database", "DB"])
+    $parts = explode('\\', $class);
 
-    foreach ($prefixes as $prefix => $directory) {
-        if (strncmp($class, $prefix, strlen($prefix)) !== 0) {
-            continue;
-        }
-
-        $relativeClass = substr($class, strlen($prefix));
-        $file = __DIR__ . '/' . $directory
-            . str_replace('\\', '/', $relativeClass) . '.php';
-
-        if (file_exists($file)) {
-            require_once $file;
-        }
-
-        return;
+    if (count($parts) > 1) {
+        // První část (např. "Database") převedeme na malá písmena pro název složky ("database")
+        $folder = strtolower(array_shift($parts));
+        
+        // Zbytek cesty tvoří podadresáře a název třídy
+        $file = __DIR__ . '/' . $folder . '/' . implode('/', $parts) . '.php';
+    } else {
+        // Pokud třída nemá namespace, hledá se přímo v kořenovém adresaři
+        $file = __DIR__ . '/' . $class . '.php';
     }
-
-    $file = __DIR__ . '/' . str_replace('\\', '/', $class) . '.php';
 
     if (file_exists($file)) {
         require_once $file;
