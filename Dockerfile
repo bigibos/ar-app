@@ -11,8 +11,10 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-install mysqli pdo_mysql \
     && a2enmod rewrite ssl env
 
-COPY docker/apache-ssl.conf /etc/apache2/sites-available/000-default-ssl.conf
+# COPY docker/apache-ssl.conf /etc/apache2/sites-available/000-default-ssl.conf
 
-RUN a2ensite 000-default-ssl.conf
+# RUN a2ensite 000-default-ssl.conf
+
+RUN a2ensite
 
 WORKDIR /var/www/html
