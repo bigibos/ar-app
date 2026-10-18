@@ -11,11 +11,16 @@ class DB {
 
     public static function connect()
     {
-        $servername = "mysql";
-        $port = "3306";
-        $username = "ar_app_user";
-        $password = "admin";
-        $database = "ar_app";
+        $servername = $_ENV['DB_HOST'] ?? 'localhost';
+        $port = $_ENV['DB_PORT'] ?? '3306';
+        $username = $_ENV['DB_USERNAME'] ?? 'ar_app_user';
+        $password = $_ENV['DB_PASSWORD'] ?? 'admin';
+        $database = $_ENV['DB_NAME'] ?? 'ar_app';
+
+        echo "Connecting to database at $servername:$port with user $username and database $database<br>";
+        echo "Environment variables: " . json_encode($_ENV) . "<br>";
+        echo "PHP version: " . phpversion() . "<br>";
+        echo "MySQLi extension loaded: " . (extension_loaded('mysqli') ? 'Yes' : 'No') . "<br>";
 
         $mysqli = new \mysqli($servername, $username, $password, $database, $port);
 
