@@ -38,7 +38,7 @@ session_start();
 
   try {
     DB::connect();
-    // DB::initializeMarkers();
+    DB::initializeDatabase();
   }
   catch (Exception $e) {
     echo "Nelze navázat spojení s databází";

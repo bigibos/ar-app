@@ -33,40 +33,41 @@ class DB {
         }
     }
 
-    public static function initializeMarkers(?PDO $conn = null): void
+    public static function initializeDatabase(?PDO $conn = null): void
     {
         $conn = $conn ?? self::connect();
-        
-        if (!$conn) {
-            return;
+
+        // Cesta k tvému SQL souboru
+        $schemaFile = __DIR__ . '/init/create.sql'; // Pokud ho máš ve složce database/
+
+        if (file_exists($schemaFile)) {
+            $sql = file_get_contents($schemaFile);
+            $conn->exec($sql);
+        } else {
+            throw new Exception("Soubor se schématem databáze nebyl nalezen: " . $schemaFile);
         }
 
+        // Inicializace ar_markers dat (pokud jsou prázdná)
         $result = $conn->query("SELECT * FROM ar_markers");
+        if ($result && $result->rowCount() === 0) {
+            $baseUrl = rtrim($_ENV['BASE_URL'] ?? '', '/');
+            $values = [];
+            $params = [];
 
-        if ($result && $result->rowCount() > 0) {
-            return;
+            for ($i = 0; $i < 50; $i++) {
+                $values[] = "(?, ?)";
+                $params[] = $i;
+                $params[] = $baseUrl . '/public/markers/' . $i . '.png';
+            }
+
+            $sql = "
+                INSERT INTO ar_markers (barcode_value, barcode_link)
+                VALUES " . implode(', ', $values) . "
+                ON CONFLICT DO NOTHING
+            ";
+
+            $stmt = $conn->prepare($sql);
+            $stmt->execute($params);
         }
-
-        $baseUrl = rtrim($_ENV['BASE_URL'], '/');
-
-        $values = [];
-        $params = [];
-
-        for ($i = 0; $i < 50; $i++) {
-            $values[] = "(?, ?)";
-            $params[] = $i;
-            $params[] = $baseUrl . '/public/markers/' . $i . '.png';
-        }
-
-        // Hromadný INSERT pro PostgreSQL s ON CONFLICT
-        $sql = "
-            INSERT INTO ar_markers (barcode_value, barcode_link)
-            VALUES " . implode(', ', $values) . "
-            ON CONFLICT (barcode_value) DO UPDATE SET
-                barcode_link = EXCLUDED.barcode_link
-        ";
-
-        $stmt = $conn->prepare($sql);
-        $stmt->execute($params);
     }
 }
