@@ -9,41 +9,37 @@ class DB {
 
     public static function connect()
     {
-        $dbHostEnv = $_ENV['DB_HOST'] ?? '';
+        $servername = $_ENV['DB_HOST'] ?? 'localhost';
+        $port = $_ENV['DB_PORT'] ?? '5432';
+        $username = $_ENV['DB_USERNAME'] ?? 'ar_app_user';
+        $password = $_ENV['DB_PASSWORD'] ?? 'admin';
+        $database = $_ENV['DB_NAME'] ?? 'ar_app';
 
-        // Pokud je v DB_HOST celý connection string z Renderu (začíná postgresql://)
-        if (str_starts_with($dbHostEnv, 'postgresql://') || str_starts_with($dbHostEnv, 'postgres://')) {
-            $urlParts = parse_url($dbHostEnv);
-            $servername = $urlParts['host'] ?? '';
-            $port = $urlParts['port'] ?? '5432';
-            $username = $urlParts['user'] ?? '';
-            $password = $urlParts['pass'] ?? '';
-            $database = ltrim($urlParts['path'] ?? '', '/');
-        } else {
-            // Fallback pro lokální proměnné (pokud máš rozepsáno v .env)
-            $servername = $dbHostEnv ?: 'localhost';
-            $port = $_ENV['DB_PORT'] ?? '5432';
-            $username = $_ENV['DB_USERNAME'] ?? $_ENV['DB_USER'] ?? 'ar_app_user';
-            $password = $_ENV['DB_PASSWORD'] ?? $_ENV['DB_PASS'] ?? 'admin';
-            $database = $_ENV['DB_NAME'] ?? 'ar_app';
-        }
+        echo "Connecting to database at $servername:$port with user $username and database $database<br>";
+        echo "Environment variables: " . json_encode($_ENV) . "<br>";
+        echo "PHP version: " . phpversion() . "<br>";
+        echo "PDO PostgreSQL loaded: " . (extension_loaded('pdo_pgsql') ? 'Yes' : 'No') . "<br>";
 
-        $dsn = "pgsql:host=$servername;port=$port;dbname=$database";
-        
         try {
+            $dsn = "pgsql:host=$servername;port=$port;dbname=$database";
             $pdo = new PDO($dsn, $username, $password, [
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
             ]);
             return $pdo;
         } catch (\PDOException $e) {
-            throw new Exception("Nelze navázat spojení s databází: " . $e->getMessage());
+            echo "Chyba připojení: " . $e->getMessage() . "<br>";
+            return null;
         }
     }
 
     public static function initializeMarkers(?PDO $conn = null): void
     {
         $conn = $conn ?? self::connect();
+        
+        if (!$conn) {
+            return;
+        }
 
         $result = $conn->query("SELECT * FROM ar_markers");
 
@@ -51,7 +47,7 @@ class DB {
             return;
         }
 
-        $baseUrl = rtrim($_ENV['BASE_URL'] ?? '', '/');
+        $baseUrl = rtrim($_ENV['BASE_URL'], '/');
 
         $values = [];
         $params = [];
