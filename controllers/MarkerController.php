@@ -5,51 +5,34 @@ namespace Controllers;
 use Models\MarkerModel;
 use Database\DB;
 use Exception;
-use mysqli;
+use PDO;
 
 class MarkerController
 {
-
-    public static function get(int $id, ?mysqli $conn = null): ?MarkerModel {
-
+    public static function get(int $id, ?PDO $conn = null): ?MarkerModel {
         $conn = $conn == null ? DB::connect() : $conn;
         $stmt = $conn->prepare(
             "SELECT id, barcode_value, barcode_link
             FROM ar_markers 
-            WHERE id = ?",
+            WHERE id = ?"
         );
 
-        $stmt->bind_param(
-            "i",
-            $id
-        );
+        $stmt->execute([$id]);
+        $data = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        $stmt->execute();
-
-        $result = $stmt->get_result();
-
-        if ($result->num_rows === 1) {
-            $data = $result->fetch_assoc();
+        if ($data) {
             $model = new MarkerModel();
-
-            $model->id = $id;
+            $model->id = (int)$data['id'];
             $model->barcode_value = $data['barcode_value'];
             $model->barcode_link = $data['barcode_link'];
 
             return $model;
         }
 
-
-        // Create profile model from retrieved data from database
-
         return null;
     }
 
-
-
-    
-    public static function getAll(?mysqli $conn = null): array {
-
+    public static function getAll(?PDO $conn = null): array {
         $conn = $conn == null ? DB::connect() : $conn;
         $stmt = $conn->prepare(
             "SELECT id, barcode_value, barcode_link
@@ -57,46 +40,34 @@ class MarkerController
         );
 
         $stmt->execute();
-
-        $stmt->bind_result($id, $barcode_value, $barcode_link);
-
         $result = [];
 
-        while ($stmt->fetch()) {
-
+        while ($data = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $model = new MarkerModel();   
-
-            $model->id = $id;
-            $model->barcode_value = $barcode_value;
-            $model->barcode_link = $barcode_link;
+            $model->id = (int)$data['id'];
+            $model->barcode_value = $data['barcode_value'];
+            $model->barcode_link = $data['barcode_link'];
             
             $result[] = $model;
         }
 
-
         return $result;
     }
 
-    public static function delete(?int $id, ?mysqli $conn = null): ?int {
-
+    public static function delete(?int $id, ?PDO $conn = null): ?int {
+        if ($id === null) return null;
+        
         $conn = $conn == null ? DB::connect() : $conn;
         $stmt = $conn->prepare(
-            "DELETE FROM ar_markers WHERE id = ?",
-        );
-
-        $stmt->bind_param(
-            "i",
-            $id
+            "DELETE FROM ar_markers WHERE id = ?"
         );
 
         try {
-            $stmt->execute();
-        }
-        catch (Exception $e) {
+            $stmt->execute([$id]);
+        } catch (Exception $e) {
             return null;
         }
 
-
-        return  $id;  
+        return $id;  
     } 
 }

@@ -5,16 +5,11 @@ namespace Controllers;
 use Database\DB;
 use Models\UserModel;
 use Exception;
-use mysqli;
+use PDO;
 
 class UserController
 {
-
-    /**
-     * Registrace uzivatele
-     */
-    public static function add(UserModel $model, string $pwd, ?mysqli $conn = null): ?UserModel {
-
+    public static function add(UserModel $model, string $pwd, ?PDO $conn = null): ?UserModel {
         $conn = $conn == null ? DB::connect() : $conn;
         $stmt = $conn->prepare(
             "INSERT INTO users (username, email, hash, gallery_id) 
@@ -23,307 +18,197 @@ class UserController
 
         $hash = password_hash($pwd, PASSWORD_BCRYPT);
         
-
-        $stmt->bind_param(
-            "sssi",
-            $model->username,
-            $model->email,
-            $hash,
-            $model->gallery->id
-        );
-
         try {
-            $stmt->execute();
-        }
-        catch (Exception $e) {
+            $stmt->execute([
+                $model->username,
+                $model->email,
+                $hash,
+                $model->gallery->id
+            ]);
+        } catch (Exception $e) {
             return null;
         }
 
-        $model->id = mysqli_insert_id($conn);
+        $model->id = (int)$conn->lastInsertId();
 
         return $model;
-
     }
 
-    public static function update(UserModel $model, ?mysqli $conn = null): ?UserModel {
-
-        $role = 2; // user
+    public static function update(UserModel $model, ?PDO $conn = null): ?UserModel {
         $conn = $conn == null ? DB::connect() : $conn;
         $stmt = $conn->prepare(
             "UPDATE users SET
                 email = ?
-            WHERE id = ?",
-        );
-
-
-        $stmt->bind_param(
-            "si",
-            $model->email,
-            $model->id
+            WHERE id = ?"
         );
 
         try {
-            $stmt->execute();
-        }
-        catch (Exception $e) {
+            $stmt->execute([
+                $model->email,
+                $model->id
+            ]);
+        } catch (Exception $e) {
             return null;
         }
 
-
         return $model;
-
     }
 
-    public static function get(int $id, ?mysqli $conn = null): ?UserModel {
-
+    public static function get(int $id, ?PDO $conn = null): ?UserModel {
         $conn = $conn == null ? DB::connect() : $conn;
         $stmt = $conn->prepare(
-            "SELECT username, email, gallery_id
+            "SELECT id, username, email, gallery_id
             FROM users 
-            WHERE id = ?",
+            WHERE id = ?"
         );
 
-        $stmt->bind_param(
-            "i",
-            $id
-        );
+        $stmt->execute([$id]);
+        $data = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        $stmt->execute();
-
-        $result = $stmt->get_result();
-
-        if ($result->num_rows === 1) {
-            $data = $result->fetch_assoc();
+        if ($data) {
             $model = new UserModel();
-
-            $model->id = $id;
+            $model->id = (int)$data['id'];
             $model->username = $data['username'];
             $model->email = $data['email'];
-            $model->gallery = GalleryController::get($data['gallery_id']);
+            $model->gallery = GalleryController::get($data['gallery_id'], $conn);
             
-
             return $model;
         }
-
-
-        // Create profile model from retrieved data from database
 
         return null;
     }
 
-
-
-    
-    public static function getAll(?mysqli $conn = null): array {
-
+    public static function getAll(?PDO $conn = null): array {
         $conn = $conn == null ? DB::connect() : $conn;
         $stmt = $conn->prepare(
-            "SELECT id, email, gallery_id
+            "SELECT id, username, email, gallery_id
             FROM users"
         );
 
         $stmt->execute();
-
-        $stmt->bind_result($userId, $username, $email, $galleryId);
-
         $result = [];
 
-        while ($stmt->fetch()) {
-
+        while ($data = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $currentProfile = new UserModel();   
-
-            $currentProfile->id = $userId;
-            $currentProfile->username = $username;
-            $currentProfile->email = $email;
-            $currentProfile->gallery = GalleryController::get($galleryId);
+            $currentProfile->id = (int)$data['id'];
+            $currentProfile->username = $data['username'];
+            $currentProfile->email = $data['email'];
+            $currentProfile->gallery = GalleryController::get($data['gallery_id'], $conn);
             
             $result[] = $currentProfile;
         }
 
-
         return $result;
     }
 
-    public static function delete(?int $id, ?mysqli $conn = null): ?int { 
+    public static function delete(?int $id, ?PDO $conn = null): ?int { 
+        if ($id === null) return null;
+        
         $conn = $conn == null ? DB::connect() : $conn;
-
         $stmt = $conn->prepare(
-            "DELETE FROM users WHERE id = ?",
-        );
-
-        $stmt->bind_param(
-            "i",
-            $id
+            "DELETE FROM users WHERE id = ?"
         );
 
         try {
-            $stmt->execute();
-        }
-        catch (Exception $e) {
+            $stmt->execute([$id]);
+        } catch (Exception $e) {
             return null;
         }
 
-
-        return  $id;  
+        return $id;  
     }
 
-    /**
-     * Hledani uzivatele podle uzivatelskeho jmena
-     */
-    public static function find(string $username, ?mysqli $conn = null): ?UserModel {
-        
+    public static function find(string $username, ?PDO $conn = null): ?UserModel {
         $conn = $conn == null ? DB::connect() : $conn;
         $stmt = $conn->prepare(
             "SELECT id, username, email, gallery_id
             FROM users 
-            WHERE username = ?",
+            WHERE username = ?"
         );
 
-        $stmt->bind_param(
-            "s",
-            $username
-        );
+        $stmt->execute([$username]);
+        $data = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        $stmt->execute();
-
-        $result = $stmt->get_result();
-
-        if ($result->num_rows === 1) {
-            $data = $result->fetch_assoc();
+        if ($data) {
             $model = new UserModel();
-
-            $model->id = $data['id'];
+            $model->id = (int)$data['id'];
             $model->username = $data['username'];
             $model->email = $data['email'];
-            $model->gallery = GalleryController::get($data['gallery_id']);
+            $model->gallery = GalleryController::get($data['gallery_id'], $conn);
 
             return $model;
         }
 
-
-        // Create profile model from retrieved data from database
-
         return null;
     }
 
-    /**
-     * Vytvareni autentikacniho tokenu
-     */
     public static function createAuthToken(int $id, string $username, string $hash) {
         $random_number = mt_rand();
-
         $token_data = $id . $username . $hash . time() . $random_number;
-
-        $token = hash('sha256', $token_data);
-
-        return $token;
+        return hash('sha256', $token_data);
     }
 
-    /**
-     * Ulozeni autentikacniho tokenu k zaznamu uzivatele v databazi
-     */
-    public static function storeAuthToken($id, $auth_token, ?mysqli $conn = null): ?int {
+    public static function storeAuthToken($id, $auth_token, ?PDO $conn = null): ?int {
         $conn = $conn == null ? DB::connect() : $conn;
         $stmt = $conn->prepare(
             "UPDATE users SET
                 auth_token = ?
-            WHERE id = ?",
-        );
-
-
-        $stmt->bind_param(
-            "si",
-            $auth_token,
-            $id
+            WHERE id = ?"
         );
 
         try {
-            $stmt->execute();
-        }
-        catch (Exception $e) {
+            $stmt->execute([$auth_token, $id]);
+        } catch (Exception $e) {
             return null;
         }
 
-
         return $id;
-
     }
 
-    /**
-     * Prihlaseni uzivatele
-     */
-    public static function login(string $username, string $pwd, ?mysqli $conn = null): ?string{
-        
+    public static function login(string $username, string $pwd, ?PDO $conn = null): ?string {
         $conn = $conn == null ? DB::connect() : $conn;
         $stmt = $conn->prepare(
             "SELECT id, hash 
             FROM users 
-            WHERE username = ?",
+            WHERE username = ?"
         );
 
-        $stmt->bind_param(
-            "s",
-            $username
-        );
+        $stmt->execute([$username]);
+        $data = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        $stmt->execute();
-
-        $result = $stmt->get_result();
-
-        if ($result->num_rows === 1) {
-            $data = $result->fetch_assoc();
-
+        if ($data) {
             $id = $data['id'];
             $hash = $data['hash'];
 
-            $pwdValid = password_verify($pwd, $hash);
-
-            if ($pwdValid) {
+            if (password_verify($pwd, $hash)) {
                 $auth_token = self::createAuthToken($id, $username, $hash);
-                if (self::storeAuthToken($id, $auth_token) === null) {
+                if (self::storeAuthToken($id, $auth_token, $conn) === null) {
                     return null;
                 }
                 return $auth_token;
             }
-
         }
-
-
-        // Create profile model from retrieved data from database
 
         return null;
     }
 
-    /**
-     * Autentizace uzivatele pomoci tokenu
-     * Slouzi k udrzeni prihlaseneho stavu u uzivatel, aby se uzivatel nemusel pri kazde akci znovu prihlasovat
-     */
-    public static function auth($auth_token, ?mysqli $conn = null): ?UserModel {
+    public static function auth($auth_token, ?PDO $conn = null): ?UserModel {
         $conn = $conn == null ? DB::connect() : $conn;
         $stmt = $conn->prepare(
             "SELECT id, username, email, gallery_id
             FROM users 
-            WHERE auth_token = ?",
+            WHERE auth_token = ?"
         );
 
-        $stmt->bind_param(
-            "s",
-            $auth_token
-        );
+        $stmt->execute([$auth_token]);
+        $data = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        $stmt->execute();
-
-        $result = $stmt->get_result();
-
-        if ($result->num_rows === 1) {
-            $data = $result->fetch_assoc();
-
+        if ($data) {
             $user = new UserModel();
-
-            $user->id = $data['id'];
+            $user->id = (int)$data['id'];
             $user->username = $data['username'];
             $user->email = $data['email'];
-            $user->gallery = GalleryController::get($data['gallery_id']);
+            $user->gallery = GalleryController::get($data['gallery_id'], $conn);
 
             return $user;
         }
@@ -331,35 +216,24 @@ class UserController
         return null;
     }
 
-    /**
-     * Odhlaseni uzivatele a resetování autentizacniho tokenu
-     */
-    public static function logout($username, ?mysqli $conn = null): ?string {
-
-        $user = self::find($username);
-
+    public static function logout($username, ?PDO $conn = null): ?string {
         $conn = $conn == null ? DB::connect() : $conn;
-        $stmt = $conn->prepare(
-            "UPDATE users SET
-                auth_token = ?
-            WHERE id = ?",
-        );
-
-        $no_auth_token = null;
-
-        $stmt->bind_param(
-            "si",
-            $no_auth_token,
-            $user->id
-        );
-
-        try {
-            $stmt->execute();
-        }
-        catch (Exception $e) {
+        $user = self::find($username, $conn);
+        if (!$user) {
             return null;
         }
 
+        $stmt = $conn->prepare(
+            "UPDATE users SET
+                auth_token = ?
+            WHERE id = ?"
+        );
+
+        try {
+            $stmt->execute([null, $user->id]);
+        } catch (Exception $e) {
+            return null;
+        }
 
         return $username;
     }

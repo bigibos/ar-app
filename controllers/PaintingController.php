@@ -5,41 +5,36 @@ namespace Controllers;
 use Models\PaintingModel;
 use Database\DB;
 use Exception;
-use mysqli;
+use PDO;
 
 class PaintingController
 {
-    public static function add(PaintingModel $model, ?mysqli $conn = null): ?PaintingModel {
-
+    public static function add(PaintingModel $model, ?PDO $conn = null): ?PaintingModel {
         $conn = $conn == null ? DB::connect() : $conn;
         $stmt = $conn->prepare(
             "INSERT INTO paintings (name, author, image_link, gallery_id, marker_id) 
-            VALUES (?, ?, ?, ?, ?)",
-        );
-
-        $stmt->bind_param(
-            "sssii",
-            $model->name,
-            $model->author,
-            $model->image_link,
-            $model->gallery->id,
-            $model->marker->id
+            VALUES (?, ?, ?, ?, ?)"
         );
 
         try {
-            $stmt->execute();
-        }
-        catch (Exception $e) {
+            $stmt->execute([
+                $model->name,
+                $model->author,
+                $model->image_link,
+                $model->gallery->id,
+                $model->marker->id
+            ]);
+        } catch (Exception $e) {
             return null;
         }
 
-        $model->id = mysqli_insert_id($conn);
+        // V PostgreSQL je ideální zajistit, že lastInsertId() vrací správné ID (v závislosti na názvu sekvence)
+        $model->id = (int)$conn->lastInsertId();
 
         return $model;
     }
 
-    public static function update(PaintingModel $model, ?mysqli $conn = null): ?PaintingModel {
-
+    public static function update(PaintingModel $model, ?PDO $conn = null): ?PaintingModel {
         $conn = $conn == null ? DB::connect() : $conn;
         $stmt = $conn->prepare(
             "UPDATE paintings SET
@@ -48,82 +43,57 @@ class PaintingController
                 image_link = ?,
                 gallery_id = ?,
                 marker_id = ?
-            WHERE id = ?",
-        );
-
-
-        $stmt->bind_param(
-            "sssiii",
-            $model->name,
-            $model->author,
-            $model->image_link,
-            $model->gallery->id,
-            $model->marker->id,
-            $model->id
+            WHERE id = ?"
         );
 
         try {
-            $stmt->execute();
-        }
-        catch (Exception $e) {
+            $stmt->execute([
+                $model->name,
+                $model->author,
+                $model->image_link,
+                $model->gallery->id,
+                $model->marker->id,
+                $model->id
+            ]);
+        } catch (Exception $e) {
             return null;
         }
 
-
         return $model;
-
     }
 
-    public static function get(int $id, ?mysqli $conn = null): ?PaintingModel {
-
+    public static function get(int $id, ?PDO $conn = null): ?PaintingModel {
         $conn = $conn == null ? DB::connect() : $conn;
         $stmt = $conn->prepare(
             "SELECT id, name, author, image_link, gallery_id, marker_id
             FROM paintings 
-            WHERE id = ?",
+            WHERE id = ?"
         );
 
-        $stmt->bind_param(
-            "i",
-            $id
-        );
+        $stmt->execute([$id]);
+        $data = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        $stmt->execute();
-
-        $result = $stmt->get_result();
-
-        if ($result->num_rows === 1) {
-            $data = $result->fetch_assoc();
+        if ($data) {
             $model = new PaintingModel();
-
-            $model->id = $id;
+            $model->id = (int)$data['id'];
             $model->name = $data['name'];
             $model->author = $data['author'];
             $model->image_link = $data['image_link'];
-            $model->gallery = GalleryController::get($data['gallery_id']);
-            $model->marker = MarkerController::get($data['marker_id']);
-
+            $model->gallery = GalleryController::get($data['gallery_id'], $conn);
+            $model->marker = MarkerController::get($data['marker_id'], $conn);
 
             return $model;
         }
 
-
-        // Create profile model from retrieved data from database
-
         return null;
     }
 
-
-
-    
-    public static function getAll(?int $gallery_id = null, ?mysqli $conn = null): array {
-
-        /**
-         * Nastaveni filtru vyberu maleb podle id galerie
-         */
+    public static function getAll(?int $gallery_id = null, ?PDO $conn = null): array {
         $filter = "";
+        $params = [];
         if ($gallery_id !== null) {
-            $filter = "WHERE gallery_id = ". $gallery_id;
+            $filter = "WHERE gallery_id = ?";
+            $params[] = $gallery_id;
         }
 
         $conn = $conn == null ? DB::connect() : $conn;
@@ -132,50 +102,38 @@ class PaintingController
             FROM paintings $filter"
         );
 
-        $stmt->execute();
-
-        $stmt->bind_result($id, $name, $author, $image_linkg, $gallery_id, $marker_id);
-
+        $stmt->execute($params);
         $result = [];
 
-        while ($stmt->fetch()) {
-
+        while ($data = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $model = new PaintingModel();   
-
-            $model->id = $id;
-            $model->name = $name;
-            $model->author = $author;
-            $model->image_link = $image_linkg;
-            $model->gallery = GalleryController::get($gallery_id);
-            $model->marker = MarkerController::get($marker_id);
+            $model->id = (int)$data['id'];
+            $model->name = $data['name'];
+            $model->author = $data['author'];
+            $model->image_link = $data['image_link'];
+            $model->gallery = GalleryController::get($data['gallery_id'], $conn);
+            $model->marker = MarkerController::get($data['marker_id'], $conn);
             
             $result[] = $model;
         }
 
-
         return $result;
     }
 
-    public static function delete(?int $id, ?mysqli $conn = null): ?int {
+    public static function delete(?int $id, ?PDO $conn = null): ?int {
+        if ($id === null) return null;
 
         $conn = $conn == null ? DB::connect() : $conn;
         $stmt = $conn->prepare(
-            "DELETE FROM paintings WHERE id = ?",
-        );
-
-        $stmt->bind_param(
-            "i",
-            $id
+            "DELETE FROM paintings WHERE id = ?"
         );
 
         try {
-            $stmt->execute();
-        }
-        catch (Exception $e) {
+            $stmt->execute([$id]);
+        } catch (Exception $e) {
             return null;
         }
 
-
-        return  $id;  
+        return $id;  
     } 
 }
